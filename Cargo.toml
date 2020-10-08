@@ -1,0 +1,12 @@
+[package]
+name = "post-server"
+version = "0.1.0"
+authors = ["niconico <joulin.nicolas@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+blog-grpc = { git = "https://github.com/niconicoj/blog-grpc.git" }
+tonic = "0.3.1"
+tokio = { version = "0.2.22", features = ['macros']}
