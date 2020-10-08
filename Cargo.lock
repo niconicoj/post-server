@@ -59,7 +59,7 @@ checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 [[package]]
 name = "blog-grpc"
 version = "0.1.0"
-source = "git+https://github.com/niconicoj/blog-grpc.git#e818a46dca9d761b1c64c01c474676a42975ff33"
+source = "git+https://github.com/niconicoj/blog-grpc.git#a3a040fe782cc6dbf9545813d91514897197af9d"
 dependencies = [
  "prost",
  "tonic",

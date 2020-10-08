@@ -1,6 +1,6 @@
 use tonic::{transport::Server, Request, Response, Status};
 
-use blog_grpc::post::{
+use blog_grpc::blog::{
     Post,
     CreatePostRequest,
     Timestamp,
@@ -29,12 +29,12 @@ impl PostService for MyPostService {
                     body: post.body,
                     tags: post.tags,
                     created_at: Some(Timestamp {
-                        seconds: timestamp.as_secs() as i64,
-                        nanos: timestamp.subsec_nanos() as i32
+                        seconds: timestamp.as_secs(),
+                        nanos: timestamp.subsec_nanos()
                     }),
                     updated_at: Some(Timestamp {
-                        seconds: timestamp.as_secs() as i64,
-                        nanos: timestamp.subsec_nanos() as i32
+                        seconds: timestamp.as_secs(),
+                        nanos: timestamp.subsec_nanos()
                     }),
                 }))
             },
@@ -46,7 +46,7 @@ impl PostService for MyPostService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "172.17.125.96:50051".parse()?;
+    let addr = "[::1]:50051".parse()?;
     let post_service = MyPostService::default();
 
     Server::builder()
