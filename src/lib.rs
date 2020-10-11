@@ -48,3 +48,17 @@ pub fn read_post(post_id: String, conn: &PgConnection) -> Result<models::Post, S
         Err(_) => Err(Status::not_found("requested post could not be found"))
     }
 }
+
+pub fn update_post(updated_post: &models::UpdatePost, conn: &PgConnection) -> Result<models::Post, Status> {
+    use schema::posts::dsl::*;
+
+    match diesel::update(posts.find(updated_post.id))
+        .set((
+                title.eq(&updated_post.title),
+                body.eq(&updated_post.body),
+        ))
+        .get_result(conn) {
+            Ok(res) => Ok(res),
+            Err(_) => Err(Status::invalid_argument("could not perform update")),
+        }
+}

@@ -20,3 +20,9 @@ pub struct NewPost {
     pub title: String,
     pub body: String,
 }
+
+pub struct UpdatePost {
+    pub id: Uuid,
+    pub title: String,
+    pub body: String,
+}
