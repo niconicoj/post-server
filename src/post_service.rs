@@ -13,7 +13,7 @@ use blog_grpc::blog::{
     post_service_server::PostService,
 };
 
-use super::post_server::{models, create_post, establish_connection};
+use super::post_server::{models, create_post, read_post, establish_connection};
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -67,7 +67,32 @@ impl PostService for MyPostService {
     }
     async fn read_post(&self, request: Request<ReadPostRequest>) -> Result<Response<Post>, Status> {
         println!("read request : {:?}",request);
-        Err(Status::unimplemented("procedure not yet implemented"))
+        let conn = establish_connection()?;
+
+        let post = read_post(request.into_inner().id, &conn)?;
+        let created_at = match (post.created_at as SystemTime).duration_since(UNIX_EPOCH) {
+            Ok(ts) => ts,
+            Err(_) => return Err(Status::internal("internal server error")),
+        };
+        let updated_at = match (post.updated_at as SystemTime).duration_since(UNIX_EPOCH) {
+            Ok(ts) => ts,
+            Err(_) => return Err(Status::internal("internal server error")),
+        };
+
+        Ok(Response::new(Post {
+            id: post.id.to_hyphenated().to_string(),
+            title: post.title,
+            body: post.body,
+            tags: vec![],
+            created_at: Some(Timestamp {
+                seconds: created_at.as_secs(),
+                nanos: created_at.subsec_nanos(),
+            }),
+            updated_at: Some(Timestamp {
+                seconds: updated_at.as_secs(),
+                nanos: updated_at.subsec_nanos(),
+            }),
+        }))
     }
 
     async fn update_post(&self, request: Request<UpdatePostRequest>) -> Result<Response<Post>, Status> {

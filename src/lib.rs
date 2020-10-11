@@ -9,6 +9,7 @@ use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
 use std::env;
+use uuid::Uuid;
 
 // I don't like having this dependency here but It will work fine for the scope of the project.
 use tonic::Status;
@@ -32,4 +33,18 @@ pub fn create_post(new_post: &models::NewPost, conn: &PgConnection) -> Result<mo
             Ok(res) => Ok(res),
             Err(_) => Err(Status::internal("failed to save the post"))
         }
+}
+
+pub fn read_post(post_id: String, conn: &PgConnection) -> Result<models::Post, Status> {
+    use schema::posts::dsl::*;
+
+    let uuid = match Uuid::parse_str(post_id.as_str()) {
+        Ok(uuid) => uuid,
+        Err(_) => return Err(Status::invalid_argument("incorrectly formatted uuid.")),
+    };
+    
+    match posts.find(uuid).first::<models::Post>(conn) {
+        Ok(res) => Ok(res),
+        Err(_) => Err(Status::not_found("requested post could not be found"))
+    }
 }
