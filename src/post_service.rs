@@ -13,7 +13,14 @@ use blog_grpc::blog::{
     post_service_server::PostService,
 };
 
-use super::post_server::{models, create_post, read_post, update_post, establish_connection};
+use super::post_server::{
+    models, 
+    create_post, 
+    read_post, 
+    update_post, 
+    delete_post,
+    establish_connection,
+};
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -144,7 +151,12 @@ impl PostService for MyPostService {
 
     async fn delete_post(&self, request: Request<DeletePostRequest>) -> Result<Response<Empty>, Status> {
         println!("delete request : {:?}",request);
-        Err(Status::unimplemented("procedure not yet implemented"))
+        let conn = establish_connection()?;
+
+        match delete_post(request.into_inner().id, &conn) {
+            Ok(_) => Ok(Response::new(Empty {})),
+            Err(err) => Err(err),
+        }
     }
 
     async fn list_post(&self, request: Request<ListPostRequest>) -> Result<Response<ListPostResponse>, Status> {

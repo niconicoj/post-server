@@ -62,3 +62,17 @@ pub fn update_post(updated_post: &models::UpdatePost, conn: &PgConnection) -> Re
             Err(_) => Err(Status::invalid_argument("could not perform update")),
         }
 }
+
+pub fn delete_post(post_id: String, conn: &PgConnection) -> Result<(), Status> {
+    use schema::posts::dsl::*;
+
+    let uuid = match Uuid::parse_str(post_id.as_str()) {
+        Ok(uuid) => uuid,
+        Err(_) => return Err(Status::invalid_argument("incorrectly formatted uuid.")),
+    };
+
+    match diesel::delete(posts.find(uuid)).execute(conn) {
+        Ok(_) => Ok(()),
+        Err(_) => Err(Status::invalid_argument("could not perform deletion.")),
+    }
+}
