@@ -19,6 +19,7 @@ use super::post_server::{
     read_post, 
     update_post, 
     delete_post,
+    list_post,
     establish_connection,
 };
 
@@ -161,6 +162,24 @@ impl PostService for MyPostService {
 
     async fn list_post(&self, request: Request<ListPostRequest>) -> Result<Response<ListPostResponse>, Status> {
         println!("list request : {:?}",request);
-        Err(Status::unimplemented("procedure not yet implemented"))
+        let conn = establish_connection()?;
+        let req = request.into_inner();
+        match list_post(req.page_token, req.page_size, &conn) {
+            Ok(res) => {
+                Ok(Response::new(
+                    ListPostResponse {
+                        posts: res.posts.iter()
+                            .map(|p| p.into_response()).collect(),
+                            next_page_token: match res.next_page_token {
+                                Some(token) => token,
+                                None => "".to_string()
+                            }
+                    }
+                ))
+            },
+            Err(_) => Err(Status::invalid_argument("something is wrong with the request.")),
+        }
     }
+
+
 }

@@ -8,7 +8,10 @@ pub mod models;
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
-use std::env;
+use std::{
+    env,
+    time::SystemTime,
+};
 use uuid::Uuid;
 
 // I don't like having this dependency here but It will work fine for the scope of the project.
@@ -74,5 +77,52 @@ pub fn delete_post(post_id: String, conn: &PgConnection) -> Result<(), Status> {
     match diesel::delete(posts.find(uuid)).execute(conn) {
         Ok(_) => Ok(()),
         Err(_) => Err(Status::invalid_argument("could not perform deletion.")),
+    }
+}
+
+pub fn list_post(page_token: String, page_size: u32, conn: &PgConnection) -> Result<models::PaginatedPost, Status> {
+    use schema::posts::dsl::*;
+    let result = match page_token.is_empty() {
+        true => posts
+            .order(created_at.desc())
+            .limit(page_size as i64)
+            .load::<models::Post>(conn),
+        false => {
+            let uuid = match Uuid::parse_str(page_token.as_str()) {
+                Ok(uuid) => uuid,
+                Err(_) => return Err(Status::invalid_argument("incorrectly formatted uuid.")),
+            };
+            let first_post = match posts.select(created_at).find(uuid).first::<SystemTime>(conn) {
+                Ok(sys_time) => sys_time,
+                Err(_) => return Err(Status::not_found("could not find a post to paginate from.")),
+            };
+            posts
+                .order(created_at.desc())
+                .limit(page_size as i64)
+                .filter(created_at.lt(first_post))
+                .load::<models::Post>(conn)
+        }
+    };
+
+    match result {
+        Ok(res) => {
+            match res.len() == page_size as usize {
+                true => {
+                    let next_page_token = res.last().unwrap().id.to_string();
+
+                    Ok( models::PaginatedPost {
+                        posts: res,
+                        next_page_token: Some(next_page_token),
+                    } )
+                },
+                false => {
+                    Ok( models::PaginatedPost {
+                        posts: res,
+                        next_page_token: None,
+                    } )
+                },
+            }
+        },
+        Err(_) => Err(Status::invalid_argument("could not perform list.")),
     }
 }
